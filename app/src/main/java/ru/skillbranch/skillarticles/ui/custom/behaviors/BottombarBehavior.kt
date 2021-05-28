@@ -1,20 +1,17 @@
-package ru.skillbranch.skillarticles.ui.custom
+package ru.skillbranch.skillarticles.ui.custom.behaviors
 
 import android.animation.ValueAnimator
-import android.content.Context
-import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.math.MathUtils
 import androidx.core.view.ViewCompat
 import com.google.android.material.snackbar.Snackbar
-import kotlin.math.max
-import kotlin.math.min
+import ru.skillbranch.skillarticles.ui.custom.Bottombar
 
 
-class BottomBarBehavior<V: View>(context: Context, attributeSet: AttributeSet) :
-    CoordinatorLayout.Behavior<View>(context,attributeSet) {
+class BottombarBehavior: CoordinatorLayout.Behavior<Bottombar>() {
 
     @ViewCompat.NestedScrollType
     private var lastStartedType: Int = 0
@@ -23,7 +20,7 @@ class BottomBarBehavior<V: View>(context: Context, attributeSet: AttributeSet) :
 
     override fun onStartNestedScroll(
         coordinatorLayout: CoordinatorLayout,
-        child: View,
+        child: Bottombar,
         directTargetChild: View,
         target: View,
         axes: Int,
@@ -40,7 +37,7 @@ class BottomBarBehavior<V: View>(context: Context, attributeSet: AttributeSet) :
 
     override fun onStopNestedScroll(
         coordinatorLayout: CoordinatorLayout,
-        child: View,
+        child: Bottombar,
         target: View,
         type: Int
     ) {
@@ -67,20 +64,23 @@ class BottomBarBehavior<V: View>(context: Context, attributeSet: AttributeSet) :
 
     override fun onNestedPreScroll(
         coordinatorLayout: CoordinatorLayout,
-        child: View,
+        child: Bottombar,
         target: View,
         dx: Int,
         dy: Int,
         consumed: IntArray,
         type: Int
     ) {
+        if (!child.isSearchMode) {
+            val offset = MathUtils.clamp(child.translationY + dy, 0f, child.height.toFloat())
+            if (offset != child.translationY) child.translationY = offset
+        }
         super.onNestedPreScroll(coordinatorLayout, child, target, dx, dy, consumed, type)
-        child.translationY = max(0f, min(child.height.toFloat(), child.translationY + dy))
     }
 
     override fun layoutDependsOn(
         parent: CoordinatorLayout,
-        child: View,
+        child: Bottombar,
         dependency: View
     ): Boolean {
         if (dependency is Snackbar.SnackbarLayout) {
@@ -88,6 +88,7 @@ class BottomBarBehavior<V: View>(context: Context, attributeSet: AttributeSet) :
         }
         return super.layoutDependsOn(parent, child, dependency)
     }
+
 
     private fun updateSnackbar(child: View, snackbarLayout: Snackbar.SnackbarLayout) {
         if (snackbarLayout.layoutParams is CoordinatorLayout.LayoutParams) {

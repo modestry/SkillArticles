@@ -28,20 +28,19 @@
             />
     </com.google.android.material.appbar.AppBarLayout>
     <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollview"
+        android:id="@+id/scroll"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
         >
-        <TextView
+        <ru.skillbranch.skillarticles.ui.custom.markdown.MarkdownContentView
             android:id="@+id/tv_text_content"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:text="Loading..."
-            >
-
-        </TextView>
+            android:padding="16dp"
+            android:focusable="true"
+            android:clipToPadding="false"
+            android:focusableInTouchMode="true" />
     </androidx.core.widget.NestedScrollView>
     
     <ru.skillbranch.skillarticles.ui.custom.ArticleSubmenu
@@ -54,7 +53,6 @@
         android:elevation="8dp"
         android:layout_marginBottom="8dp"
         app:layout_dodgeInsetEdges="bottom"
-        app:layout_behavior=".ui.custom.ArticleSubmenuBehavior"
         android:visibility="gone"
         tools:visibility="visible"
         />
@@ -67,7 +65,6 @@
         android:theme="@style/ArticleBarsTheme"
         android:elevation="4dp"
         app:layout_insetEdge="bottom"
-        app:layout_behavior=".ui.custom.BottomBarBehavior"
         />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,15 +1,25 @@
 package ru.skillbranch.skillarticles.viewmodels
 
+import android.os.Bundle
+import androidx.core.os.bundleOf
 import androidx.lifecycle.LiveData
 import ru.skillbranch.skillarticles.data.ArticleData
 import ru.skillbranch.skillarticles.data.ArticlePersonalInfo
 import ru.skillbranch.skillarticles.data.repositories.ArticleRepository
+import ru.skillbranch.skillarticles.data.repositories.MarkdownElement
 import ru.skillbranch.skillarticles.extensions.data.toAppSettings
 import ru.skillbranch.skillarticles.extensions.data.toArticlePersonalInfo
 import ru.skillbranch.skillarticles.extensions.format
+import ru.skillbranch.skillarticles.extensions.indexesOf
+import ru.skillbranch.skillarticles.data.repositories.MarkdownParser
+import ru.skillbranch.skillarticles.data.repositories.clearContent
+import ru.skillbranch.skillarticles.viewmodels.base.BaseViewModel
+import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
+import ru.skillbranch.skillarticles.viewmodels.base.Notify
 
 class ArticleViewModel(private val articleId: String): BaseViewModel<ArticleState>( ArticleState()) {
     private val repository = ArticleRepository
+    private var clearContent: String? = null
     private var menuIsShown:Boolean = false
 
     init {
@@ -52,7 +62,7 @@ class ArticleViewModel(private val articleId: String): BaseViewModel<ArticleStat
     }
 
     // load text from network
-    private fun getArticleContent(): LiveData<List<Any>?> {
+    private fun getArticleContent(): LiveData<List<MarkdownElement>?> {
         return repository.loadArticleContent(articleId)
     }
 
@@ -130,20 +140,35 @@ class ArticleViewModel(private val articleId: String): BaseViewModel<ArticleStat
         notify(Notify.ErrorMessage(msg,"OK",null))
     }
 
-    fun hideMenu() {
-        updateState { it.copy(isShowMenu = false) }
+    fun handleSearch(query: String?) {
+        query ?: return
+        if(clearContent == null && currentState.content.isNotEmpty())
+            clearContent = currentState.content.clearContent()
+
+        val result = clearContent?.indexesOf(query)
+            ?.map { it to it + query.length }
+        val newSearchPos =
+            if (!result.isNullOrEmpty() && currentState.searchPosition >= result.size) result.size - 1
+            else currentState.searchPosition
+        updateState { it.copy(searchQuery = query, searchResults = result!!, searchPosition = newSearchPos) }
+
     }
 
-    fun showMenu() {
-        updateState { it.copy(isShowMenu = menuIsShown) }
+    fun handleSearchMode(isSearch: Boolean) {
+        updateState { it.copy(isSearch  = isSearch, isShowMenu = false, searchPosition = 0
+            , searchResults = mutableListOf()) }
     }
 
-    fun handleSearchQuery(query: String?) {
-        updateState { it.copy(searchQuery = query) }
+    fun handleUpResult() {
+        updateState { it.copy(searchPosition = it.searchPosition.dec()) }
     }
 
-    fun handleIsSearch(isSearch: Boolean) {
-        updateState { it.copy(isSearch  = isSearch) }
+    fun handleDownResult() {
+        updateState { it.copy(searchPosition = it.searchPosition.inc()) }
+    }
+
+    fun handleCopyCode() {
+        notify(Notify.TextMessage("Code copy to clipboard"))
     }
 
 }
@@ -168,6 +193,26 @@ data class ArticleState(
     val date: String? = null, //дата публикации
     val author: Any? = null,//автор статьи
     val poster: String? = null, //обложка статьи
-    val content: List<Any> = emptyList(),//контент
+    val content: List<MarkdownElement> = emptyList(),//контент
     val reviews: List<Any> = emptyList() //отзывы
-)
+):IViewModelState {
+    override fun save(outState: Bundle) {
+        outState.putAll(
+            bundleOf(
+                "isSearch" to  isSearch,
+                "searchQuery" to  searchQuery,
+                "searchResults" to searchResults,
+                "searchPosition" to searchPosition
+            )
+        )
+    }
+
+    override fun restore(savedState: Bundle): IViewModelState {
+        return copy (
+            isSearch = savedState["isSearch"] as Boolean,
+            searchQuery  = savedState["searchQuery"] as? String,
+            searchResults  =savedState["searchResults"] as List<Pair<Int, Int>>,
+            searchPosition = savedState["searchPosition"] as Int
+        )
+    }
+}
