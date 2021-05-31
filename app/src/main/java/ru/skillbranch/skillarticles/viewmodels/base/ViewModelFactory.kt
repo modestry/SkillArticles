@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import ru.skillbranch.skillarticles.viewmodels.ArticleViewModel
 
+@Suppress("UNCHECKED_CAST")
 class ViewModelFactory(private val params: Any) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ArticleViewModel::class.java)) {
